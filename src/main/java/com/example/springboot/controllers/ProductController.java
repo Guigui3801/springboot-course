@@ -11,13 +11,14 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
+
 @RestController
 public class ProductController {
-
     @Autowired
     ProductRepository repository;
 
@@ -30,7 +31,17 @@ public class ProductController {
 
     @GetMapping("/products")
     public ResponseEntity<List<ProductModel>> getAllProducts(){
-        return ResponseEntity.status(HttpStatus.OK).body(repository.findAll());
+
+        List<ProductModel> productsList = repository.findAll();
+
+        if(!productsList.isEmpty()){
+            for(ProductModel product : productsList){
+                UUID id = product.getIdProduct();
+                product.add(linkTo(methodOn(ProductController.class).getProductById(id)).withSelfRel());
+            }
+        }
+
+        return ResponseEntity.status(HttpStatus.OK).body(productsList);
     }
 
     @GetMapping("/products/{id}")
